@@ -1,130 +1,111 @@
---[[
-    🍋 LEMON HUB V2.2 - CLASSIC BRING MOB
-    - Modo: Farm de Proximidade (Elimina o que estiver perto).
-    - Função: Bring Mob (Agrupa todos os NPCs do mesmo nome).
-    - Estabilidade: Câmera fixa e Noclip integrados.
-]]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local VIM = game:GetService("VirtualInputManager")
 
 for _, v in pairs(game:GetService("CoreGui"):GetChildren()) do
     if v.Name == "Rayfield" then v:Destroy() end
 end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local VIM = game:GetService("VirtualInputManager")
-
 local Window = Rayfield:CreateWindow({
-   Name = "🍋 Lemon Hub v2.2 | Classic Farm",
-   LoadingTitle = "Injetando Bring Mob...",
-   LoadingSubtitle = "Modo Clássico (Sem Quest)",
+   Name = "🍋 Lemon Hub v4.5",
+   LoadingTitle = "Carregando Módulos de Combate...",
 })
 
--- // VARIÁVEIS
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-
 _G.AutoFarm = false
-_G.BringMob = true
-_G.TweenSpeed = 300 
-_G.WalkSpeed = 20
+_G.TweenSpeed = 300
+_G.Aimbot = false
+_G.ESP = false
+_G.SkillZ = false
+_G.SkillX = false
+_G.SkillC = false
+_G.SkillV = false
 
--- // 🛡️ FUNÇÃO BRING MOB (Agrupa NPCs no Alvo)
-local function BringMobFunction(TargetName, TargetCFrame)
-    if _G.BringMob then
-        pcall(function()
-            for _, v in pairs(workspace.Enemies:GetChildren()) do
-                if v.Name == TargetName and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
-                    v.HumanoidRootPart.CFrame = TargetCFrame
-                    v.HumanoidRootPart.CanCollide = false
-                    v.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
-                    if v.Humanoid:FindFirstChild("Animator") then v.Humanoid.Animator:Destroy() end -- Opcional: Para o NPC não revidar
+local function ToTween(TargetCFrame)
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root or not TargetCFrame then return end
+    local dist = (root.Position - TargetCFrame.Position).Magnitude
+    local tween = TweenService:Create(root, TweenInfo.new(dist / _G.TweenSpeed, Enum.EasingStyle.Linear), {CFrame = TargetCFrame})
+    tween:Play()
+    local nc = RunService.Stepped:Connect(function()
+        for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
+    end)
+    tween.Completed:Wait()
+    nc:Disconnect()
+end
+
+local function GetClosestPlayer()
+    local target = nil
+    local dist = math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d target = p end
+        end
+    end
+    return target
+end
+
+local function UseSkills()
+    if _G.SkillZ then VIM:SendKeyEvent(true, "Z", false, game) task.wait(0.1) end
+    if _G.SkillX then VIM:SendKeyEvent(true, "X", false, game) task.wait(0.1) end
+    if _G.SkillC then VIM:SendKeyEvent(true, "C", false, game) task.wait(0.1) end
+    if _G.SkillV then VIM:SendKeyEvent(true, "V", false, game) task.wait(0.1) end
+end
+
+local function ManageESP()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local highlight = p.Character:FindFirstChild("LemonESP")
+            if _G.ESP then
+                if not highlight then
+                    highlight = Instance.new("Highlight", p.Character)
+                    highlight.Name = "LemonESP"
+                    highlight.FillColor = Color3.fromRGB(255, 255, 0)
                 end
+            elseif highlight then
+                highlight:Destroy()
             end
-        end)
+        end
     end
 end
 
--- // ⚡ BYPASS DE VELOCIDADE (Original Fix)
-RunService.Stepped:Connect(function()
-    pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            local hum = LocalPlayer.Character.Humanoid
-            if _G.WalkSpeed > 20 and hum.MoveDirection.Magnitude > 0 then
-                LocalPlayer.Character:TranslateBy(hum.MoveDirection * (_G.WalkSpeed / 100))
-            end
-        end
-    end)
-end)
-
--- // ⚔️ INTERFACE
-local FarmTab = Window:CreateTab("Farm Clássico", "swords")
-
-FarmTab:CreateToggle({
-   Name = "Ativar Farm de Proximidade",
-   CurrentValue = false,
-   Callback = function(v) _G.AutoFarm = v end,
-})
-
-FarmTab:CreateToggle({
-   Name = "Puxar Inimigos (Bring Mob)",
-   CurrentValue = true,
-   Callback = function(v) _G.BringMob = v end,
-})
-
-local PVPPoint = Window:CreateTab("Ajustes", "settings")
-PVPPoint:CreateSlider({
-   Name = "Velocidade Bypass",
-   Range = {20, 500},
-   Increment = 1,
-   CurrentValue = 20,
-   Callback = function(v) _G.WalkSpeed = v end,
-})
-
--- // 🚜 LOOP DE EXECUÇÃO (SEM QUEST)
 task.spawn(function()
     while true do
-        task.wait(0.1)
+        task.wait()
+        if _G.Aimbot then
+            local target = GetClosestPlayer()
+            if target then
+                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+            end
+        end
+        if _G.ESP then ManageESP() end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait()
         if _G.AutoFarm then
             pcall(function()
                 local char = LocalPlayer.Character
-                if not char then return end
-                
-                -- Procura o inimigo mais próximo na pasta de inimigos
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
                     if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-                        
-                        -- Auto Equipamento
-                        if not char:FindFirstChildOfClass("Tool") then
-                            local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-                            if tool then char.Humanoid:EquipTool(tool) end
-                        end
-
                         repeat
                             task.wait()
                             if not _G.AutoFarm then break end
-                            
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            local eRoot = enemy:FindFirstChild("HumanoidRootPart")
-                            
-                            if root and eRoot then
-                                -- Ativa o Bring Mob para o nome desse inimigo específico
-                                BringMobFunction(enemy.Name, eRoot.CFrame)
-
-                                -- Posiciona o jogador acima para bater em área
-                                root.Velocity = Vector3.new(0,0,0)
-                                root.CFrame = eRoot.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                                
-                                -- Noclip bypass
-                                for _, part in pairs(char:GetDescendants()) do
-                                    if part:IsA("BasePart") then part.CanCollide = false end
-                                end
-
-                                -- Ataque
-                                VIM:SendMouseButtonEvent(0,0,0,true,game,0)
-                                VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+                            char.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                            VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                            if not char:FindFirstChildOfClass("Tool") then
+                                local t = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                                if t then char.Humanoid:EquipTool(t) end
                             end
+                            UseSkills()
                         until enemy.Humanoid.Health <= 0 or not _G.AutoFarm
                     end
                 end
@@ -133,4 +114,18 @@ task.spawn(function()
     end
 end)
 
-print("🍋 Lemon Hub v2.2 - Classic Farm Loaded!")
+local FarmTab = Window:CreateTab("Auto Farm", "crosshair")
+FarmTab:CreateToggle({Name = "Ativar Farm Próximos", CurrentValue = false, Callback = function(v) _G.AutoFarm = v end})
+
+local SkillTab = Window:CreateTab("Auto Skills", "zap")
+SkillTab:CreateToggle({Name = "Usar Skill Z", CurrentValue = false, Callback = function(v) _G.SkillZ = v end})
+SkillTab:CreateToggle({Name = "Usar Skill X", CurrentValue = false, Callback = function(v) _G.SkillX = v end})
+SkillTab:CreateToggle({Name = "Usar Skill C", CurrentValue = false, Callback = function(v) _G.SkillC = v end})
+SkillTab:CreateToggle({Name = "Usar Skill V", CurrentValue = false, Callback = function(v) _G.SkillV = v end})
+
+local CombatTab = Window:CreateTab("Combate", "swords")
+CombatTab:CreateToggle({Name = "Aimbot Players", CurrentValue = false, Callback = function(v) _G.Aimbot = v end})
+CombatTab:CreateToggle({Name = "ESP Players", CurrentValue = false, Callback = function(v) _G.ESP = v end})
+
+local ConfigTab = Window:CreateTab("Configurações", "settings")
+ConfigTab:CreateSlider({Name = "Velocidade Tween", Range = {100, 500}, Increment = 10, Suffix = "Speed", CurrentValue = 300, Callback = function(v) _G.TweenSpeed = v end})
