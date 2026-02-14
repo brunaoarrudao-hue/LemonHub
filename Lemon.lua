@@ -5,18 +5,17 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
--- Limpar UI Antiga
+-- Limpar UI Antiga para evitar sobreposição
 for _, v in pairs(game:GetService("CoreGui"):GetChildren()) do
     if v.Name == "Rayfield" then v:Destroy() end
 end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-   Name = "🍋 Lemon Hub v4.8 | Combat Mode",
-   LoadingTitle = "Carregando Módulos de Ataque...",
+   Name = "🍋 Lemon Hub v4.9 | Ultimate Fix",
+   LoadingTitle = "A carregar funções críticas...",
 })
 
--- Variáveis Globais
 _G.AutoFarm = false
 _G.TweenSpeed = 300
 _G.Aimbot = false
@@ -26,152 +25,141 @@ _G.SkillX = false
 _G.SkillC = false
 _G.SkillV = false
 
--- Função de Movimentação (Tween)
+-- Função de Tween Corrigida
 local function ToTween(TargetCFrame)
-    local char = LocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root or not TargetCFrame then return end
-    
-    local distance = (root.Position - TargetCFrame.Position).Magnitude
-    if distance < 5 then root.CFrame = TargetCFrame return end
-    
-    local tween = TweenService:Create(root, TweenInfo.new(distance / _G.TweenSpeed, Enum.EasingStyle.Linear), {CFrame = TargetCFrame})
-    tween:Play()
-    
-    -- NoClip durante o Tween
-    local nc = RunService.Stepped:Connect(function()
-        for _, v in pairs(char:GetDescendants()) do 
-            if v:IsA("BasePart") then v.CanCollide = false end 
-        end
-        root.Velocity = Vector3.new(0,0,0)
+    pcall(function()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root or not TargetCFrame then return end
+        
+        local distance = (root.Position - TargetCFrame.Position).Magnitude
+        if distance < 8 then root.CFrame = TargetCFrame return end
+        
+        local tween = TweenService:Create(root, TweenInfo.new(distance / _G.TweenSpeed, Enum.EasingStyle.Linear), {CFrame = TargetCFrame})
+        tween:Play()
+        
+        local nc = RunService.Stepped:Connect(function()
+            for _, v in pairs(char:GetDescendants()) do 
+                if v:IsA("BasePart") then v.CanCollide = false end 
+            end
+            root.Velocity = Vector3.new(0,0,0)
+        end)
+        
+        tween.Completed:Wait()
+        nc:Disconnect()
     end)
-    
-    tween.Completed:Wait()
-    nc:Disconnect()
 end
 
--- Função para soltar Skill (Sem Segurar)
-local function UseSkill(key)
+-- Função de Skill (Fixa)
+local function CastSkill(key)
     VIM:SendKeyEvent(true, key, false, game)
     task.wait(0.05)
     VIM:SendKeyEvent(false, key, false, game)
 end
 
--- Loop de Visuais (ESP e Aimbot)
+-- Sistema de Visuais (ESP/Aimbot)
 task.spawn(function()
-    while task.wait() do
-        -- ESP
+    while task.wait(0.5) do
         if _G.ESP then
             for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character then
-                    if not p.Character:FindFirstChild("LemonESP") then
-                        local highlight = Instance.new("Highlight", p.Character)
-                        highlight.Name = "LemonESP"
-                        highlight.FillColor = Color3.fromRGB(255, 255, 0)
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    if not p.Character:FindFirstChild("LemonHighlight") then
+                        local hl = Instance.new("Highlight", p.Character)
+                        hl.Name = "LemonHighlight"
+                        hl.FillColor = Color3.fromRGB(255, 255, 0)
+                        hl.OutlineTransparency = 0
                     end
                 end
             end
         else
             for _, p in pairs(Players:GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("LemonESP") then 
-                    p.Character.LemonESP:Destroy() 
+                if p.Character and p.Character:FindFirstChild("LemonHighlight") then
+                    p.Character.LemonHighlight:Destroy()
                 end
-            end
-        end
-
-        -- AIMBOT
-        if _G.Aimbot then
-            local target, dist = nil, math.huge
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                    if d < dist then dist = d target = p end
-                end
-            end
-            if target then
-                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Character.HumanoidRootPart.Position)
             end
         end
     end
 end)
 
--- Loop de Farm (Matar Próximos)
+-- Loop de Farm por Proximidade
 task.spawn(function()
     while task.wait() do
         if _G.AutoFarm then
-            pcall(function()
-                local char = LocalPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                
-                -- Procura o NPC mais próximo no workspace
-                local targetNPC = nil
-                local shortestDist = math.huge
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if not root then continue end
 
-                for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-                    if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
-                        local d = (root.Position - enemy.HumanoidRootPart.Position).Magnitude
-                        if d < shortestDist then
-                            shortestDist = d
-                            targetNPC = enemy
+            local target = nil
+            local dist = math.huge
+
+            -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
+            local folders = {workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("NPCs"), workspace}
+            for _, folder in pairs(folders) do
+                if folder then
+                    for _, enemy in pairs(folder:GetChildren()) do
+                        if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
+                            local d = (root.Position - enemy.HumanoidRootPart.Position).Magnitude
+                            if d < dist and d < 2000 then -- Só foca no que está perto/na mesma ilha
+                                dist = d
+                                target = enemy
+                            end
                         end
                     end
                 end
+            end
 
-                if targetNPC then
-                    -- Vai até o NPC usando Tween
-                    ToTween(targetNPC.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0))
+            if target then
+                -- Movimenta
+                ToTween(target.HumanoidRootPart.CFrame * CFrame.new(0, 8, 0))
 
-                    -- Ataca enquanto o NPC estiver vivo
-                    repeat
-                        task.wait()
-                        if not _G.AutoFarm then break end
-                        
-                        root.CFrame = targetNPC.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                        
-                        -- Clique de Ataque
-                        VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                        VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-                        
-                        -- Equipar Arma
-                        if not char:FindFirstChildOfClass("Tool") then
-                            local t = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-                            if t then char.Humanoid:EquipTool(t) end
-                        end
+                repeat
+                    task.wait()
+                    if not _G.AutoFarm or not target.Parent or target.Humanoid.Health <= 0 then break end
+                    
+                    root.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 8, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                    
+                    -- Ataque e Equipar
+                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                    
+                    if not char:FindFirstChildOfClass("Tool") then
+                        local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                        if tool then char.Humanoid:EquipTool(tool) end
+                    end
 
-                        -- Usar Skills Selecionadas
-                        if _G.SkillZ then UseSkill(Enum.KeyCode.Z) end
-                        if _G.SkillX then UseSkill(Enum.KeyCode.X) end
-                        if _G.SkillC then UseSkill(Enum.KeyCode.C) end
-                        if _G.SkillV then UseSkill(Enum.KeyCode.V) end
-
-                    until not targetNPC or targetNPC.Humanoid.Health <= 0 or not _G.AutoFarm
-                end
-            end)
+                    -- Skills
+                    if _G.SkillZ then CastSkill(Enum.KeyCode.Z) end
+                    if _G.SkillX then CastSkill(Enum.KeyCode.X) end
+                    if _G.SkillC then CastSkill(Enum.KeyCode.C) end
+                    if _G.SkillV then CastSkill(Enum.KeyCode.V) end
+                    
+                until target.Humanoid.Health <= 0 or not _G.AutoFarm
+            end
         end
     end
 end)
 
--- Interface Tabs
-local MainTab = Window:CreateTab("Ataque", "crosshair")
-MainTab:CreateToggle({
-   Name = "Matar NPCs Próximos (Tween)",
+-- Interface
+local Tab1 = Window:CreateTab("Principal", "bolt")
+Tab1:CreateToggle({
+   Name = "Matar NPCs Próximos",
    CurrentValue = false,
    Callback = function(v) _G.AutoFarm = v end,
 })
 
-local SkillTab = Window:CreateTab("Skills", "zap")
-SkillTab:CreateToggle({Name = "Ativar Z", CurrentValue = false, Callback = function(v) _G.SkillZ = v end})
-SkillTab:CreateToggle({Name = "Ativar X", CurrentValue = false, Callback = function(v) _G.SkillX = v end})
-SkillTab:CreateToggle({Name = "Ativar C", CurrentValue = false, Callback = function(v) _G.SkillC = v end})
-SkillTab:CreateToggle({Name = "Ativar V", CurrentValue = false, Callback = function(v) _G.SkillV = v end})
+local Tab2 = Window:CreateTab("Auto Skills", "zap")
+Tab2:CreateToggle({Name = "Usar Z", CurrentValue = false, Callback = function(v) _G.SkillZ = v end})
+Tab2:CreateToggle({Name = "Usar X", CurrentValue = false, Callback = function(v) _G.SkillX = v end})
+Tab2:CreateToggle({Name = "Usar C", CurrentValue = false, Callback = function(v) _G.SkillC = v end})
+Tab2:CreateToggle({Name = "Usar V", CurrentValue = false, Callback = function(v) _G.SkillV = v end})
 
-local VisualTab = Window:CreateTab("Combate", "eye")
-VisualTab:CreateToggle({Name = "ESP Players", CurrentValue = false, Callback = function(v) _G.ESP = v end})
-VisualTab:CreateToggle({Name = "Aimbot", CurrentValue = false, Callback = function(v) _G.Aimbot = v end})
+local Tab3 = Window:CreateTab("PVP & Visual", "eye")
+Tab3:CreateToggle({Name = "ESP Players", CurrentValue = false, Callback = function(v) _G.ESP = v end})
+Tab3:CreateToggle({Name = "Aimbot", CurrentValue = false, Callback = function(v) _G.Aimbot = v end})
 
-local ConfigTab = Window:CreateTab("Ajustes", "settings")
-ConfigTab:CreateSlider({
-   Name = "Velocidade do Tween",
+local Tab4 = Window:CreateTab("Config", "settings")
+Tab4:CreateSlider({
+   Name = "Velocidade Tween",
    Range = {100, 500},
    Increment = 10,
    CurrentValue = 300,
