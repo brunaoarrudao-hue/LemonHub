@@ -217,9 +217,6 @@ task.spawn(function()
         end
     end
 end)
-
-                
-
             -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
             local folders = {workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("NPCs"), workspace}
             for _, folder in pairs(folders) do
