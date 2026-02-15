@@ -95,20 +95,23 @@ task.spawn(function()
                         local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
                         if tool then char.Humanoid:EquipTool(tool) end
                     end
-                else
-                    -- 2. SE NÃO HÁ INIMIGOS, PROCURA O PORTAL (PAD)
-                    -- Nas Raids, o portal para a próxima ilha geralmente aparece no centro
-                    for _, pad in pairs(workspace:GetDescendants()) do
-                        if pad.Name == "TeleportPad" or pad.Name == "Pad" or pad.Name == "IslandTeleport" then
-                            ToTween(pad.CFrame)
-                            break
+                                else
+                    -- 2. LÓGICA DE NAVEGAÇÃO POR #ISLAND
+                    -- Se não há inimigos, procuramos a ilha na sequência
+                    for i = 1, 5 do -- As raids costumam ter 5 ilhas
+                        local islandName = "#island" .. i
+                        local nextIsland = workspace:FindFirstChild(islandName) or workspace.Map:FindFirstChild(islandName)
+                        
+                        if nextIsland then
+                            -- Verifica se você já não está nela (se está longe, ele voa)
+                            local distToIsland = (root.Position - nextIsland.Position).Magnitude
+                            if distToIsland > 50 then 
+                                ToTween(nextIsland.CFrame * CFrame.new(0, 20, 0)) -- Voa um pouco acima da ilha
+                                break -- Para de procurar outras ilhas e foca em chegar nesta
+                            end
                         end
                     end
-                end
-            end)
-        end
-    end
-end)
+
 
 -- // ⚔️ LÓGICA DO AUTO KILL PLAYER (PVP)
 task.spawn(function()
