@@ -97,6 +97,48 @@ task.spawn(function()
 
             local target = nil
             local dist = math.huge
+-- // LÓGICA DO AUTO CHEST
+task.spawn(function()
+    while task.wait() do
+        if _G.AutoChest then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                local targetChest = nil
+                local shortestDist = math.huge
+
+                -- Procura baús no Workspace (Método abrangente)
+                for _, v in pairs(workspace:GetDescendants()) do
+                    if (v.Name:find("Chest") or v.Name:find("Baú")) and v:IsA("BasePart") then
+                        -- Verifica se o baú ainda tem o "TouchTransmitter" (se não foi pego)
+                        if v:FindFirstChildOfClass("TouchTransmitter") then
+                            local dist = (root.Position - v.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                targetChest = v
+                            end
+                        end
+                    end
+                end
+
+                if targetChest then
+                    -- Usa a sua função ToTween já existente
+                    ToTween(targetChest.CFrame)
+                    
+                    -- Garante a coleta ao encostar
+                    firetouchinterest(root, targetChest, 0)
+                    firetouchinterest(root, targetChest, 1)
+                else
+                    -- Se não houver baús perto, você pode adicionar um aviso ou esperar
+                    task.wait(1) 
+                end
+            end)
+        end
+    end
+end)
+                
 
             -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
             local folders = {workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("NPCs"), workspace}
@@ -151,6 +193,13 @@ Tab1:CreateToggle({
    Name = "Matar NPCs Próximos",
    CurrentValue = false,
    Callback = function(v) _G.AutoFarm = v end,
+})
+FarmTab:CreateToggle({
+   Name = "Auto Chest (Farm de Dinheiro)",
+   CurrentValue = false,
+   Callback = function(v) 
+       _G.AutoChest = v 
+   end,
 })
 
 local Tab2 = Window:CreateTab("Auto Skills", "zap")
