@@ -458,6 +458,36 @@ Tab1:CreateButton({
        TeleportToScientist()
    end,
 })
+Tab1:CreateToggle({
+   Name = "Auto Quest (Pegar Missão)",
+   CurrentValue = false,
+   Callback = function(Value)
+       _G.AutoQuest = Value
+   end,
+})
+Tab1:CreateDropdown({
+   Name = "Escolher Local de Farm",
+   Options = {"Bandidos", "Macacos", "Gorilas", "Piratas"},
+   CurrentOption = {"Bandidos"},
+   MultipleOptions = false,
+   Callback = function(Option)
+      local escolha = Option[1]
+      
+      if escolha == "Bandidos" then
+          _G.MissaoSelecionada = "BanditQuest1"
+          _G.NivelDaMissao = 1
+      elseif escolha == "Macacos" then
+          _G.MissaoSelecionada = "JungleQuest"
+          _G.NivelDaMissao = 1
+      elseif escolha == "Gorilas" then
+          _G.MissaoSelecionada = "JungleQuest"
+          _G.NivelDaMissao = 2
+      elseif escolha == "Piratas" then
+          _G.MissaoSelecionada = "PiratelerQuest"
+          _G.NivelDaMissao = 1
+      end
+   end,
+})
 
 local Tab2 = Window:CreateTab("Auto Skills", "zap")
 Tab2:CreateToggle({Name = "Usar Z", CurrentValue = false, Callback = function(v) _G.SkillZ = v end})
