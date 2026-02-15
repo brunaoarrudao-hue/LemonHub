@@ -163,9 +163,10 @@ task.spawn(function()
 
             local target = nil
             local dist = math.huge
--- // LÓGICA DO AUTO CHEST
+-- // LÓGICA DO AUTO CHEST OTIMIZADA
 task.spawn(function()
-    while task.wait() do
+    while true do 
+        task.wait(0.1) -- Pequeno delay para aliviar o processador
         if _G.AutoChest then
             pcall(function()
                 local char = LocalPlayer.Character
@@ -175,35 +176,48 @@ task.spawn(function()
                 local targetChest = nil
                 local shortestDist = math.huge
 
-                -- Procura baús no Workspace (Método abrangente)
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if (v.Name:find("Chest") or v.Name:find("Baú")) and v:IsA("BasePart") then
-                        -- Verifica se o baú ainda tem o "TouchTransmitter" (se não foi pego)
-                        if v:FindFirstChildOfClass("TouchTransmitter") then
-                            local dist = (root.Position - v.Position).Magnitude
-                            if dist < shortestDist then
-                                shortestDist = dist
-                                targetChest = v
-                            end
+                -- Em vez de GetDescendants no mapa todo, vamos focar em pastas comuns
+                -- ou usar um delay maior para a busca pesada
+                for _, v in pairs(workspace:GetChildren()) do
+                    -- Verifica se é um baú e se está ativo (tem o sensor de toque)
+                    if v:IsA("BasePart") and v.Name:find("Chest") and v:FindFirstChildOfClass("TouchTransmitter") then
+                        local dist = (root.Position - v.Position).Magnitude
+                        if dist < shortestDist then
+                            shortestDist = dist
+                            targetChest = v
                         end
                     end
                 end
 
+                -- Se não achou baús "soltos", faz uma busca mais profunda, mas apenas 1 vez a cada segundo
+                if not targetChest then
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("TouchTransmitter") and v.Parent.Name:find("Chest") then
+                            local chest = v.Parent
+                            local dist = (root.Position - chest.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                targetChest = chest
+                            end
+                        end
+                        -- Essencial para não travar: Se a lista for muito longa, pausa um pouco
+                        if _ % 500 == 0 then task.wait() end 
+                    end
+                end
+
                 if targetChest then
-                    -- Usa a sua função ToTween já existente
                     ToTween(targetChest.CFrame)
-                    
-                    -- Garante a coleta ao encostar
                     firetouchinterest(root, targetChest, 0)
                     firetouchinterest(root, targetChest, 1)
-                else
-                    -- Se não houver baús perto, você pode adicionar um aviso ou esperar
-                    task.wait(1) 
+                    task.wait(0.2) -- Espera coletar antes de procurar o próximo
                 end
             end)
+        else
+            task.wait(1) -- Se o toggle estiver desligado, o script "dorme" por 1 segundo
         end
     end
 end)
+
                 
 
             -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
