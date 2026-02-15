@@ -52,6 +52,29 @@ local function ToTween(TargetCFrame)
         nc:Disconnect()
     end)
 end
+local function TeleportToScientist()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    -- Coordenadas aproximadas para o Cientista em cada Sea
+    -- Nota: Se o jogo mudar o local, podes atualizar os números aqui
+    local sea1_pos = CFrame.new(-4555, 15, -3134) -- Exemplo (Geralmente não há raids no Sea 1)
+    local sea2_pos = CFrame.new(-6500, 296, -2300) -- Localização típica no Hot and Cold (Sea 2)
+    local sea3_pos = CFrame.new(-5430, 314, -2740) -- Localização no Sea 3 (Castle on the Sea / Mansion)
+
+    -- Detecta em qual Sea o jogador está e teleporta
+    -- Se usares o nome do NPC no Workspace, é ainda mais seguro:
+    local npc = workspace:FindFirstChild("Mysterious Scientist", true)
+    
+    if npc and npc:FindFirstChild("HumanoidRootPart") then
+        ToTween(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+    else
+        -- Fallback: Se não achar o NPC pelo nome, usa coordenadas manuais (Exemplo Sea 2)
+        ToTween(sea2_pos) 
+    end
+end
+
 
 -- Função de Skill (Fixa)
 local function CastSkill(key)
@@ -322,6 +345,12 @@ Tab1:CreateToggle({
    Callback = function(Value)
        _G.AutoRaid = Value
        print("Status Auto Raid: ", Value)
+   end,
+})
+Tab1:CreateButton({
+   Name = "Ir para o Cientista (Raid NPC)",
+   Callback = function()
+       TeleportToScientist()
    end,
 })
 
