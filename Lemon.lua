@@ -15,7 +15,7 @@ local Window = Rayfield:CreateWindow({
    Name = "🍋 Lemon Hub v4.9",
    LoadingTitle = "Loading script",
 })
-
+_G.AutoQuest = false
 _G.AutoFarm = false
 _G.AutoChest = false
 _G.AutoRaid = false
