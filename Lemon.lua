@@ -15,6 +15,9 @@ local Window = Rayfield:CreateWindow({
    Name = "🍋 Lemon Hub v4.9",
    LoadingTitle = "Loading script",
 })
+_G.AutoQuest = false
+_G.MissaoSelecionada = "BanditQuest1"
+_G.NivelDaMissao = 1
 _G.AutoFarm = false
 _G.AutoChest = false
 _G.AutoRaid = false
@@ -100,6 +103,29 @@ local function TeleportToScientist()
         })
     end
 end
+task.spawn(function()
+    while task.wait(1) do -- Verifica a cada 1 segundo
+        if _G.AutoQuest then
+            pcall(function()
+                local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
+                
+                -- Verifica se a janela de missão está invisível (ou seja, você está sem missão)
+                if not playerGui.Main.Quest.Visible then
+                    local remote = game:GetService("ReplicatedStorage").Remotes.CommF_
+                    
+                    -- Envia o comando para o servidor usando as variáveis que definimos
+                    remote:InvokeServer("StartQuest", _G.MissaoSelecionada, _G.NivelDaMissao)
+                    
+                    Rayfield:Notify({
+                        Title = "Auto Quest",
+                        Content = "Pegando missão: " .. _G.MissaoSelecionada,
+                        Duration = 2
+                    })
+                end
+            end)
+        end
+    end
+end)
 
 
 -- Função de Skill (Fixa)
