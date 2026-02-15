@@ -18,6 +18,7 @@ local Window = Rayfield:CreateWindow({
 _G.BringMob = true
 _G.MegaHitbox = true
 _G.HitRange = 250
+_G.DistanciaEmbaixo = 5
 _G.AutoQuest = false
 _G.MissaoSelecionada = "BanditQuest1"
 _G.NivelDaMissao = 1
@@ -125,57 +126,33 @@ task.spawn(function()
                     if eHrp and eHum and eHum.Health > 0 then
                         local dist = (eHrp.Position - hrp.Position).Magnitude
                         
-                        -- 1. Lógica do Bring Mob (Puxa para sua frente se estiver no range)
+                        -- 1. BRING MOB (Coloca os NPCs embaixo de você)
                         if _G.BringMob and dist <= _G.HitRange then
-                            eHrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -3) -- Puxa para 3 studs na sua frente
+                            -- O segredo está aqui: hrp.CFrame * CFrame.new(0, -_G.DistanciaEmbaixo, 0)
+                            -- Isso joga o NPC para a sua posição X e Z, mas com Y negativo (baixo)
+                            eHrp.CFrame = hrp.CFrame * CFrame.new(0, -_G.DistanciaEmbaixo, 0)
                             eHrp.CanCollide = false
                             eHum:ChangeState(11)
                         end
 
-                        -- 2. Lógica do Dano (Armazena quem será atingido)
+                        -- 2. HITBOX
                         if _G.MegaHitbox and dist <= _G.HitRange then
                             table.insert(hitTargets, eHrp)
                         end
                     end
                 end
 
-                -- 3. Dispara o Dano em Massa
+                -- 3. DANO EM MASSA
                 if #hitTargets > 0 and tool then
-                    -- Envia o sinal de dano para todos os alvos da lista de uma vez
                     game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", tool, hitTargets)
                     
-                    -- Fast Attack (Corta animação para bater na velocidade da luz)
+                    -- Fast Attack
                     for _, track in pairs(character.Humanoid:GetPlayingAnimationTracks()) do
                         track:Stop(0)
                     end
                 end
             end
         end)
-    end
-end)
-                            
-                            
-task.spawn(function()
-    while task.wait(1) do -- Verifica a cada 1 segundo
-        if _G.AutoQuest then
-            pcall(function()
-                local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
-                
-                -- Verifica se a janela de missão está invisível (ou seja, você está sem missão)
-                if not playerGui.Main.Quest.Visible then
-                    local remote = game:GetService("ReplicatedStorage").Remotes.CommF_
-                    
-                    -- Envia o comando para o servidor usando as variáveis que definimos
-                    remote:InvokeServer("StartQuest", _G.MissaoSelecionada, _G.NivelDaMissao)
-                    
-                    Rayfield:Notify({
-                        Title = "Auto Quest",
-                        Content = "Pegando missão: " .. _G.MissaoSelecionada,
-                        Duration = 2
-                    })
-                end
-            end)
-        end
     end
 end)
 
