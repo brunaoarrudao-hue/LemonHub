@@ -15,8 +15,6 @@ local Window = Rayfield:CreateWindow({
    Name = "🍋 Lemon Hub v4.9",
    LoadingTitle = "Loading script",
 })
-_G.BringMob = true
-_G.DistanceMob = 12
 _G.AutoQuest = false
 _G.MissaoSelecionada = "BanditQuest1"
 _G.NivelDaMissao = 1
