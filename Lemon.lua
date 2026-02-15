@@ -16,7 +16,6 @@ local Window = Rayfield:CreateWindow({
    LoadingTitle = "Loading script",
 })
 _G.BringMob = true
-_G.FastAttack = true
 _G.DistanceMob = 12
 _G.AutoQuest = false
 _G.MissaoSelecionada = "BanditQuest1"
@@ -106,66 +105,9 @@ local function TeleportToScientist()
         })
     end
 end
-task.spawn(function()
-    while task.wait() do
-        if _G.AutoFarm then
-            pcall(function()
-                local player = game.Players.LocalPlayer
-                local character = player.Character
-                local hrp = character.HumanoidRootPart
-                
-                -- 1. Busca todos os inimigos vivos
-                local enemies = {}
-                for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                        table.insert(enemies, v)
-                    end
-                end
 
-                local target = enemies[1] -- Define o alvo principal
-
-                if target then
-                    -- 2. TWEEN / TELEPORT (Te mantém em cima do alvo)
-                    hrp.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, _G.DistanceMob, 0)
-
-                    -- 3. LÓGICA DO BRING MOB (Puxa os outros NPCs para o alvo)
-                    if _G.BringMob then
-                        for i = 2, #enemies do
-                            local e = enemies[i]
-                            if e.Name == target.Name then -- Só puxa NPCs do mesmo tipo
-                                e.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
-                                e.HumanoidRootPart.CanCollide = false -- Tira colisão para não bugar
-                                e.Humanoid:ChangeState(11) -- Desativa física/movimento do NPC
-                            end
-                        end
-                    end
-
-                    -- 4. LÓGICA DO ATAQUE EM ÁREA (AOE)
-                    if _G.FastAttack then
-                        local tool = character:FindFirstChildOfClass("Tool")
-                        if tool then
-                            local hitTargets = {}
-                            -- Verifica quem está perto para receber dano
-                            for _, e in pairs(enemies) do
-                                if (e.HumanoidRootPart.Position - hrp.Position).Magnitude <= 60 then
-                                    table.insert(hitTargets, e.HumanoidRootPart)
-                                end
-                            end
                             
-                            -- Envia o hit pro servidor (Dano em Área)
-                            game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", tool, hitTargets)
                             
-                            -- Fast Attack (Corta a animação pra bater mais rápido)
-                            for _, track in pairs(character.Humanoid:GetPlayingAnimationTracks()) do
-                                track:Stop(0)
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
 task.spawn(function()
     while task.wait(1) do -- Verifica a cada 1 segundo
         if _G.AutoQuest then
