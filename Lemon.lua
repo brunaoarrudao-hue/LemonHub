@@ -16,7 +16,7 @@ local Window = Rayfield:CreateWindow({
    LoadingTitle = "Loading script",
 })
 _G.BringMob = true
-_G.HitRange = 100 
+_G.HitRange = 250 
 _G.DistanciaBaixo = 5
 _G.DistanciaFrente = 3
 _G.AutoQuest = false
