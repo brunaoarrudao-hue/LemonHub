@@ -17,6 +17,7 @@ local Window = Rayfield:CreateWindow({
 })
 
 _G.AutoFarm = false
+_G.AutoChest = false
 _G.TweenSpeed = 300
 _G.Aimbot = false
 _G.ESP = false
