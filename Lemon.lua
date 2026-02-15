@@ -193,6 +193,7 @@ Tab1:CreateToggle({
    Name = "Matar NPCs Próximos",
    CurrentValue = false,
    Callback = function(v) _G.AutoFarm = v end,
+})
 Tab1:CreateToggle({
    Name = "Auto Chest (Farm de Dinheiro)",
    CurrentValue = false,
