@@ -52,42 +52,55 @@ local function ToTween(TargetCFrame)
         nc:Disconnect()
     end)
 end
+
 local function TeleportToScientist()
     local char = LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    local targetNPC = nil
+    local target = nil
 
-    -- Busca refinada: Procura por modelos que contenham "Scientist" no nome
+    -- 1. Tenta achar por qualquer parte que contenha "Scientist" no nome
+    -- 2. Tenta achar o NPC pelo nome da "Aura" ou "Invisible Seat" que costuma ficar neles
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name:find("Scientist") and v:FindFirstChild("HumanoidRootPart") then
-            targetNPC = v
-            break -- Encontrou o primeiro que faz sentido, para a busca
+        -- Procura por nomes comuns do NPC ou o modelo dele
+        if (v.Name:find("Scientist") or v.Name:find("Raid") or v.Name == "Cientista") and v:IsA("BasePart") then
+            -- Verifica se é um NPC real (geralmente tem um Humanoid ou está perto de um)
+            if v.Parent:FindFirstChildOfClass("Humanoid") or v:FindFirstChildOfClass("ClickDetector") or v:FindFirstChildOfClass("ProximityPrompt") then
+                target = v
+                break
+            end
         end
     end
 
-    if targetNPC then
-        -- Rayfield:Notify apenas para você saber que ele achou
-        Rayfield:Notify({
-           Title = "NPC Encontrado!",
-           Content = "Teleportando para: " .. targetNPC.Name,
-           Duration = 3,
-           Image = 4483345998,
-        })
+    -- 3. Se ainda não achou, vamos procurar pela posição padrão do laboratório no Sea 2 (Pós-Rework)
+    -- As coordenadas do laboratório costumam ser constantes mesmo mudando o visual
+    if not target then
+        local sea2_lab = Vector3.new(-6410, 250, -4490) -- Coordenada comum do Laboratório
+        local dist = (root.Position - sea2_lab).Magnitude
         
-        -- Teleporta para a posição do NPC
-        ToTween(targetNPC.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+        if dist < 5000 then -- Se você estiver no Sea 2
+             Rayfield:Notify({Title = "Busca por Coordenada", Content = "NPC não achado pelo nome. Indo ao local provável do Lab.", Duration = 3})
+             ToTween(CFrame.new(-6410, 250, -4490)) -- Vai para a entrada do Lab
+             return
+        end
+    end
+
+    if target then
+        Rayfield:Notify({Title = "NPC Localizado!", Content = "Indo até: " .. target.Parent.Name, Duration = 3})
+        
+        -- Se for uma parte, vamos para ela. Se for um modelo, vamos para a RootPart.
+        local targetPos = target:IsA("Model") and target.PrimaryPart.CFrame or target.CFrame
+        ToTween(targetPos * CFrame.new(0, 0, 3))
     else
-        -- Se não achar nada com "Scientist"
         Rayfield:Notify({
-           Title = "Erro",
-           Content = "Não foi possível localizar o NPC após o rework.",
+           Title = "Erro Crítico",
+           Content = "O NPC não está carregado. Vá para a ilha Hot and Cold primeiro!",
            Duration = 5,
-           Image = 4483345998,
         })
     end
 end
+
 
 -- Função de Skill (Fixa)
 local function CastSkill(key)
