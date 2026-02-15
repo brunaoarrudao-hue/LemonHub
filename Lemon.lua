@@ -107,12 +107,16 @@ task.spawn(function()
                             local distToIsland = (root.Position - nextIsland.Position).Magnitude
                             if distToIsland > 50 then 
                                 ToTween(nextIsland.CFrame * CFrame.new(0, 20, 0)) -- Voa um pouco acima da ilha
-                                break -- Para de procurar outras ilhas e foca em chegar nesta
+                                break 
                             end
                         end
                     end
-
-
+                end -- Fim do if enemy
+            end) -- Fim do pcall
+        end -- Fim do if _G.AutoRaid
+    end -- Fim do while
+end) -- Fim do task.spawn
+                    
 -- // ⚔️ LÓGICA DO AUTO KILL PLAYER (PVP)
 task.spawn(function()
     while task.wait() do
