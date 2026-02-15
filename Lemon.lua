@@ -16,9 +16,9 @@ local Window = Rayfield:CreateWindow({
    LoadingTitle = "Loading script",
 })
 _G.BringMob = true
-_G.MegaHitbox = true
-_G.HitRange = 250
-_G.DistanciaEmbaixo = 5
+_G.HitRange = 100 
+_G.DistanciaBaixo = 5
+_G.DistanciaFrente = 3
 _G.AutoQuest = false
 _G.MissaoSelecionada = "BanditQuest1"
 _G.NivelDaMissao = 1
@@ -110,43 +110,46 @@ end
 task.spawn(function()
     while task.wait() do
         pcall(function()
-            if _G.BringMob or _G.MegaHitbox then
+            if _G.BringMob then
                 local player = game.Players.LocalPlayer
                 local character = player.Character
                 local hrp = character.HumanoidRootPart
                 local tool = character:FindFirstChildOfClass("Tool")
                 
-                local enemies = workspace.Enemies:GetChildren()
                 local hitTargets = {}
 
-                for _, v in pairs(enemies) do
+                for _, v in pairs(workspace.Enemies:GetChildren()) do
                     local eHrp = v:FindFirstChild("HumanoidRootPart")
                     local eHum = v:FindFirstChild("Humanoid")
 
                     if eHrp and eHum and eHum.Health > 0 then
                         local dist = (eHrp.Position - hrp.Position).Magnitude
                         
-                        -- 1. BRING MOB (Coloca os NPCs embaixo de você)
-                        if _G.BringMob and dist <= _G.HitRange then
-                            -- O segredo está aqui: hrp.CFrame * CFrame.new(0, -_G.DistanciaEmbaixo, 0)
-                            -- Isso joga o NPC para a sua posição X e Z, mas com Y negativo (baixo)
-                            eHrp.CFrame = hrp.CFrame * CFrame.new(0, -_G.DistanciaEmbaixo, 0)
+                        if dist <= _G.HitRange then
+                            -- 1. POSICIONAMENTO SEM CONFLITO
+                            -- Coloca o NPC um pouco à frente e abaixo para não quicar
+                            eHrp.CFrame = hrp.CFrame * CFrame.new(0, -_G.DistanciaBaixo, -_G.DistanciaFrente)
+                            
+                            -- 2. ANTI-QUICAR (Zera a física do NPC)
                             eHrp.CanCollide = false
-                            eHum:ChangeState(11)
-                        end
-
-                        -- 2. HITBOX
-                        if _G.MegaHitbox and dist <= _G.HitRange then
+                            eHrp.Velocity = Vector3.new(0,0,0) -- Para o movimento
+                            eHrp.RotVelocity = Vector3.new(0,0,0)
+                            
+                            -- Adiciona à lista de dano
                             table.insert(hitTargets, eHrp)
                         end
                     end
                 end
 
-                -- 3. DANO EM MASSA
+                -- 3. REGISTRO DE DANO (HIT)
                 if #hitTargets > 0 and tool then
+                    -- Ataque "vazio" para o servidor ver que você tentou bater
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", tool)
+                    
+                    -- Dano Real nos alvos
                     game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", tool, hitTargets)
                     
-                    -- Fast Attack
+                    -- Limpeza de animação
                     for _, track in pairs(character.Humanoid:GetPlayingAnimationTracks()) do
                         track:Stop(0)
                     end
