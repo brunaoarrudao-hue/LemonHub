@@ -53,17 +53,36 @@ local function ToTween(TargetCFrame)
     end)
 end
 local function TeleportToScientist()
-    -- Procura o NPC em todo o workspace (o 'true' faz a busca profunda)
-    local npc = workspace:FindFirstChild("Mysterious Scientist", true)
-    
-    if npc and npc:FindFirstChild("HumanoidRootPart") then
-        -- Se achou o NPC, usa o seu ToTween para ir até ele
-        ToTween(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
-    else
-        -- Se não achou, envia um aviso no chat/console para você saber
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local targetNPC = nil
+
+    -- Busca refinada: Procura por modelos que contenham "Scientist" no nome
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name:find("Scientist") and v:FindFirstChild("HumanoidRootPart") then
+            targetNPC = v
+            break -- Encontrou o primeiro que faz sentido, para a busca
+        end
+    end
+
+    if targetNPC then
+        -- Rayfield:Notify apenas para você saber que ele achou
         Rayfield:Notify({
-           Title = "Erro de Teleporte",
-           Content = "NPC 'Mysterious Scientist' não encontrado no mapa!",
+           Title = "NPC Encontrado!",
+           Content = "Teleportando para: " .. targetNPC.Name,
+           Duration = 3,
+           Image = 4483345998,
+        })
+        
+        -- Teleporta para a posição do NPC
+        ToTween(targetNPC.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+    else
+        -- Se não achar nada com "Scientist"
+        Rayfield:Notify({
+           Title = "Erro",
+           Content = "Não foi possível localizar o NPC após o rework.",
            Duration = 5,
            Image = 4483345998,
         })
