@@ -18,6 +18,7 @@ local Window = Rayfield:CreateWindow({
 
 _G.AutoFarm = false
 _G.AutoChest = false
+_G.AutoRaid = false
 _G.TweenSpeed = 300
 _G.Aimbot = false
 _G.ESP = false
@@ -59,8 +60,56 @@ local function CastSkill(key)
     VIM:SendKeyEvent(false, key, false, game)
 end
 
--- Sistema de Visuais (ESP/Aimbot)
--- Sistema de Visuais (ESP/Aimbot) - ATUALIZADO
+task.spawn(function()
+    while task.wait(0.1) do
+        if _G.AutoRaid then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                -- 1. TENTA ACHAR INIMIGOS NA RAID
+                local enemy = nil
+                local dist = math.huge
+                
+                -- Nas Raids, os NPCs costumam ficar na pasta Enemies
+                for _, v in pairs(workspace.Enemies:GetChildren()) do
+                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        local d = (root.Position - v.HumanoidRootPart.Position).Magnitude
+                        if d < dist then
+                            dist = d
+                            enemy = v
+                        end
+                    end
+                end
+
+                if enemy then
+                    -- Lógica de Ataque (Igual ao seu Auto Farm)
+                    ToTween(enemy.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0))
+                    root.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                    
+                    VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                    VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                    
+                    if not char:FindFirstChildOfClass("Tool") then
+                        local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                        if tool then char.Humanoid:EquipTool(tool) end
+                    end
+                else
+                    -- 2. SE NÃO HÁ INIMIGOS, PROCURA O PORTAL (PAD)
+                    -- Nas Raids, o portal para a próxima ilha geralmente aparece no centro
+                    for _, pad in pairs(workspace:GetDescendants()) do
+                        if pad.Name == "TeleportPad" or pad.Name == "Pad" or pad.Name == "IslandTeleport" then
+                            ToTween(pad.CFrame)
+                            break
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
 -- // ⚔️ LÓGICA DO AUTO KILL PLAYER (PVP)
 task.spawn(function()
     while task.wait() do
@@ -258,6 +307,14 @@ Tab1:CreateToggle({
    CurrentValue = false,
    Callback = function(v) 
        _G.AutoChest = v 
+   end,
+})
+Tab1:CreateToggle({
+   Name = "Auto Raid (Kill & Next Island)",
+   CurrentValue = false,
+   Callback = function(Value)
+       _G.AutoRaid = Value
+       print("Status Auto Raid: ", Value)
    end,
 })
 
