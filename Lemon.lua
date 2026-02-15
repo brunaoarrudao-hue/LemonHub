@@ -17,7 +17,7 @@ local Window = Rayfield:CreateWindow({
 })
 _G.BringMob = true
 _G.MegaHitbox = true
-_G.HitRange = 100
+_G.HitRange = 250
 _G.AutoQuest = false
 _G.MissaoSelecionada = "BanditQuest1"
 _G.NivelDaMissao = 1
