@@ -521,3 +521,29 @@ Tab4:CreateToggle({
        print("Auto Fruta: ", Value)
    end,
 })
+local ActiveCodes = {
+    "LIGHTNINGABUSE", "KITT_RESET", "SUB2GAMERROBOT_RESET1", "Sub2CaptainMaui",
+    "kittgaming", "Sub2Fer999", "Enyu_is_Pro", "Magicbus", "JCWK", 
+    "Starcodeheo", "Bluxxy", "fudd10_v2", "FUDD10", "BIGNEWS", 
+    "THEGREATACE", "SUB2GAMERROBOT_EXP1", "Sub2OfficialNoobie", 
+    "StrawHatMaine", "SUB2NOOBMASTER123", "Sub2UncleKizaru", 
+    "Sub2Daigrock", "Axiore", "TantaiGaming"
+}
+
+Tab4:CreateButton({
+    Name = "Resgatar Todos os Códigos (XP/Reset)",
+    Info = "Resgata todos os códigos de XP e Reset de Status ativos", -- Opcional
+    Callback = function()
+        for _, code in pairs(ActiveCodes) do
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("RedeemCode", code)
+            task.wait(0.3)
+        end
+        
+        Rayfield:Notify({
+            Title = "Códigos Resgatados!",
+            Content = "Todos os códigos disponíveis foram processados.",
+            Duration = 5,
+            Image = 4483362458,
+        })
+    end,
+})
