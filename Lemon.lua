@@ -163,10 +163,10 @@ task.spawn(function()
 
             local target = nil
             local dist = math.huge
--- // LÓGICA DO AUTO CHEST OTIMIZADA
+-- // LÓGICA DO AUTO CHEST (VERSÃO FINAL SEM LAG)
 task.spawn(function()
     while true do 
-        task.wait(0.1) -- Pequeno delay para aliviar o processador
+        task.wait(0.1) 
         if _G.AutoChest then
             pcall(function()
                 local char = LocalPlayer.Character
@@ -176,47 +176,55 @@ task.spawn(function()
                 local targetChest = nil
                 local shortestDist = math.huge
 
-                -- Em vez de GetDescendants no mapa todo, vamos focar em pastas comuns
-                -- ou usar um delay maior para a busca pesada
-                for _, v in pairs(workspace:GetChildren()) do
-                    -- Verifica se é um baú e se está ativo (tem o sensor de toque)
-                    if v:IsA("BasePart") and v.Name:find("Chest") and v:FindFirstChildOfClass("TouchTransmitter") then
-                        local dist = (root.Position - v.Position).Magnitude
-                        if dist < shortestDist then
-                            shortestDist = dist
-                            targetChest = v
+                -- Procura baús apenas em locais onde eles costumam spawnar
+                -- Isso evita ler o mapa inteiro (GetDescendants) e economiza FPS
+                local locations = {workspace, workspace:FindFirstChild("ChestModels"), workspace:FindFirstChild("NPCs")}
+                
+                for _, location in pairs(locations) do
+                    if location then
+                        for _, v in pairs(location:GetChildren()) do
+                            -- Verifica se o nome contém "Chest" e se tem o sensor de toque
+                            if v.Name:find("Chest") and v:IsA("BasePart") and v:FindFirstChildOfClass("TouchTransmitter") then
+                                local dist = (root.Position - v.Position).Magnitude
+                                if dist < shortestDist then
+                                    shortestDist = dist
+                                    targetChest = v
+                                end
+                            end
                         end
                     end
                 end
 
-                -- Se não achou baús "soltos", faz uma busca mais profunda, mas apenas 1 vez a cada segundo
+                -- Se não achou pelos métodos rápidos, faz a busca profunda com limitador de lag
                 if not targetChest then
                     for _, v in pairs(workspace:GetDescendants()) do
-                        if v:IsA("TouchTransmitter") and v.Parent.Name:find("Chest") then
-                            local chest = v.Parent
-                            local dist = (root.Position - chest.Position).Magnitude
-                            if dist < shortestDist then
-                                shortestDist = dist
-                                targetChest = chest
-                            end
+                        if v:IsA("TouchTransmitter") and (v.Parent.Name:find("Chest") or v.Parent.Name:find("Baú")) then
+                            targetChest = v.Parent
+                            break -- Achou um? Já vai nele logo para economizar tempo
                         end
-                        -- Essencial para não travar: Se a lista for muito longa, pausa um pouco
-                        if _ % 500 == 0 then task.wait() end 
                     end
                 end
 
                 if targetChest then
+                    -- Usa o ToTween que você já tem no script
                     ToTween(targetChest.CFrame)
+                    
+                    -- Coleta o baú
                     firetouchinterest(root, targetChest, 0)
                     firetouchinterest(root, targetChest, 1)
-                    task.wait(0.2) -- Espera coletar antes de procurar o próximo
+                    
+                    -- Pequena pausa para o baú sumir do mapa antes da próxima busca
+                    task.wait(0.3)
+                else
+                    -- Se não houver nenhum baú no mapa inteiro
+                    print("Nenhum baú encontrado no servidor.")
+                    task.wait(2)
                 end
             end)
-        else
-            task.wait(1) -- Se o toggle estiver desligado, o script "dorme" por 1 segundo
         end
     end
 end)
+
             -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
             local folders = {workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("NPCs"), workspace}
             for _, folder in pairs(folders) do
