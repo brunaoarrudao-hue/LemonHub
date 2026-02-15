@@ -317,7 +317,7 @@ Tab1:CreateToggle({
    end,
 })
 Tab1:CreateToggle({
-   Name = "Auto Raid (Kill & Next Island)",
+   Name = "Auto Raid (Beta)",
    CurrentValue = false,
    Callback = function(Value)
        _G.AutoRaid = Value
