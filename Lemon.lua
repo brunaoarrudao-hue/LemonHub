@@ -99,7 +99,7 @@ task.spawn(function()
                     -- 2. LÓGICA DE NAVEGAÇÃO POR #ISLAND
                     -- Se não há inimigos, procuramos a ilha na sequência
                     for i = 1, 5 do -- As raids costumam ter 5 ilhas
-                        local islandName = "island #" .. i
+                        local islandName = "island" .. i
                         local nextIsland = workspace:FindFirstChild(islandName) or workspace.Map:FindFirstChild(islandName)
                         
                         if nextIsland then
