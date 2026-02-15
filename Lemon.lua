@@ -58,6 +58,32 @@ local function CastSkill(key)
 end
 
 -- Sistema de Visuais (ESP/Aimbot)
+local function CreateBillboard(player)
+    local char = player.Character
+    if char and not char:FindFirstChild("LemonUI") then
+        local bgu = Instance.new("BillboardGui", char)
+        bgu.Name = "LemonUI"
+        bgu.AlwaysOnTop = true
+        bgu.ExtentsOffset = Vector3.new(0, 3, 0)
+        bgu.Size = UDim2.new(0, 200, 0, 50)
+
+        local text = Instance.new("TextLabel", bgu)
+        text.BackgroundTransparency = 1
+        text.Size = UDim2.new(1, 0, 1, 0)
+        text.TextColor3 = Color3.fromRGB(255, 255, 255)
+        text.TextStrokeTransparency = 0
+        text.TextSize = 14
+        text.Text = player.Name
+        
+        task.spawn(function()
+            while bgu.Parent do
+                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                text.Text = player.Name .. " | " .. math.floor(dist) .. "m"
+                task.wait(0.1)
+            end
+        end)
+    end
+end
 task.spawn(function()
     while task.wait(0.5) do
         if _G.ESP then
