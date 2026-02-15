@@ -21,6 +21,7 @@ _G.AutoChest = false
 _G.TweenSpeed = 300
 _G.Aimbot = false
 _G.ESP = false
+_G.AutoKillPlayer = false
 _G.SkillZ = false
 _G.SkillX = false
 _G.SkillC = false
@@ -60,6 +61,70 @@ end
 
 -- Sistema de Visuais (ESP/Aimbot)
 -- Sistema de Visuais (ESP/Aimbot) - ATUALIZADO
+-- // ⚔️ LÓGICA DO AUTO KILL PLAYER (PVP)
+task.spawn(function()
+    while task.wait() do
+        if _G.AutoKillPlayer then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                local targetPlayer = nil
+                local shortestDist = math.huge
+
+                -- 1. Procura o jogador mais próximo
+                for _, p in pairs(Players:GetPlayers()) do
+                    -- Verifica se não é você mesmo e se o jogador está vivo
+                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 and p.Character:FindFirstChild("HumanoidRootPart") then
+                        
+                        -- Opcional: Você pode adicionar uma verificação de Safe Zone aqui depois
+                        local dist = (root.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                        
+                        if dist < shortestDist then
+                            shortestDist = dist
+                            targetPlayer = p
+                        end
+                    end
+                end
+
+                -- 2. Se encontrou um alvo, inicia o ataque
+                if targetPlayer and targetPlayer.Character then
+                    local targetRoot = targetPlayer.Character.HumanoidRootPart
+                    local targetHum = targetPlayer.Character.Humanoid
+
+                    -- Voa até o jogador
+                    ToTween(targetRoot.CFrame * CFrame.new(0, 5, 0))
+
+                    -- 3. Loop de combate (gruda no jogador)
+                    repeat
+                        task.wait()
+                        -- Quebra o loop se você desligar o toggle, o cara morrer ou sair do jogo
+                        if not _G.AutoKillPlayer or not targetPlayer.Character or targetHum.Health <= 0 then break end
+                        
+                        -- Fica "colado" em cima do jogador (CFrame.new(0, 5, 0))
+                        root.CFrame = targetRoot.CFrame * CFrame.new(0, 5, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                        
+                        -- Clique de Ataque (VIM)
+                        VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                        VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                        
+                        -- Garante que a arma está equipada
+                        if not char:FindFirstChildOfClass("Tool") then
+                            local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                            if tool then char.Humanoid:EquipTool(tool) end
+                        end
+
+                        -- Você pode integrar suas funções de Auto Skill aqui também!
+                        -- if _G.SkillZ then UseSkill(Enum.KeyCode.Z) end
+
+                    until targetHum.Health <= 0 or not _G.AutoKillPlayer
+                end
+            end)
+        end
+    end
+end)
+
 task.spawn(function()
     while task.wait(0.5) do
         if _G.ESP then
@@ -212,7 +277,13 @@ Tab2:CreateToggle({Name = "Usar V", CurrentValue = false, Callback = function(v)
 local Tab3 = Window:CreateTab("PVP & Visual", "eye")
 Tab3:CreateToggle({Name = "ESP Players", CurrentValue = false, Callback = function(v) _G.ESP = v end})
 Tab3:CreateToggle({Name = "Aimbot", CurrentValue = false, Callback = function(v) _G.Aimbot = v end})
-
+Tab3:CreateToggle({
+   Name = "Auto Kill Player (Mais Próximo)",
+   CurrentValue = false,
+   Callback = function(v) 
+       _G.AutoKillPlayer = v 
+   end,
+})
 local Tab4 = Window:CreateTab("Config", "settings")
 Tab4:CreateSlider({
    Name = "Velocidade Tween",
