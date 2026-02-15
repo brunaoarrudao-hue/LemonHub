@@ -20,6 +20,7 @@ _G.AutoFarm = false
 _G.AutoChest = false
 _G.AutoRaid = false
 _G.TweenSpeed = 300
+_G.AutoFruit = false
 _G.Aimbot = false
 _G.ESP = false
 _G.AutoKillPlayer = false
@@ -302,6 +303,59 @@ task.spawn(function()
         end
     end
 end)
+                -- // 🍎 LÓGICA DO AUTO PEGÁR FRUTAS
+task.spawn(function()
+    while task.wait(0.5) do -- Checa a cada meio segundo
+        if _G.AutoFruit then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                local targetFruit = nil
+                local shortestDist = math.huge
+
+                -- Frutas spawnadas no chão ficam soltas no Workspace
+                for _, v in pairs(workspace:GetChildren()) do
+                    -- Verifica se o objeto é uma Tool (itens soltos no chão) e se tem um "Handle" (a parte física de pegar)
+                    if v:IsA("Tool") and v:FindFirstChild("Handle") then
+                        
+                        -- Pega o nome e transforma em minúsculo para facilitar a busca
+                        local nome = string.lower(v.Name)
+                        
+                        -- Verifica se o nome tem o padrão "rocket-rocket" (tem um traço) OU se tem a palavra "fruit" / "fruta"
+                        if nome:find("-") or nome:find("fruit") or nome:find("fruta") then
+                            local dist = (root.Position - v.Handle.Position).Magnitude
+                            if dist < shortestDist then
+                                shortestDist = dist
+                                targetFruit = v
+                            end
+                        end
+                    end
+                end
+
+                -- Se achou uma fruta, voa até ela
+                if targetFruit then
+                    Rayfield:Notify({
+                        Title = "🍎 Fruta Encontrada!",
+                        Content = "Indo coletar: " .. targetFruit.Name,
+                        Duration = 3
+                    })
+                    
+                    -- Voa até o "Handle" (a parte física da fruta)
+                    ToTween(targetFruit.Handle.CFrame)
+                    
+                    -- Simula o toque para guardar no inventário
+                    firetouchinterest(root, targetFruit.Handle, 0)
+                    firetouchinterest(root, targetFruit.Handle, 1)
+                    
+                    task.wait(1) -- Pausa para dar tempo do jogo registrar que você pegou
+                end
+            end)
+        end
+    end
+end)
+                
 
 
             -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
@@ -403,4 +457,12 @@ Tab4:CreateSlider({
    Increment = 10,
    CurrentValue = 300,
    Callback = function(v) _G.TweenSpeed = v end,
+})
+Tab4:CreateToggle({
+   Name = "Auto Find Fruit",
+   CurrentValue = false,
+   Callback = function(Value)
+       _G.AutoFruit = Value
+       print("Auto Fruta: ", Value)
+   end,
 })
