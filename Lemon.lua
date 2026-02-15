@@ -15,7 +15,6 @@ local Window = Rayfield:CreateWindow({
    Name = "🍋 Lemon Hub v4.9",
    LoadingTitle = "Loading script",
 })
-_G.AutoQuest = false
 _G.AutoFarm = false
 _G.AutoChest = false
 _G.AutoRaid = false
@@ -355,50 +354,7 @@ task.spawn(function()
         end
     end
 end)
-        task.spawn(function()
-    while task.wait(1) do
-        if _G.AutoQuest then
-            pcall(function()
-                local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
-                -- Verifica se a janela de missão NÃO está visível
-                if not playerGui.Main.Quest.Visible then
-                    local remote = game:GetService("ReplicatedStorage").Remotes.CommF_
-                    -- Usando o ID que funcionou para você
-                    remote:InvokeServer("StartQuest", "BanditQuest1", 1)
-                    
-                    Rayfield:Notify({
-                        Title = "Auto Quest",
-                        Content = "Missão aceita automaticamente!",
-                        Duration = 2
-                    })
-                end
-            end)
-        end
-    end
-end)
-                task.spawn(function()
-    while task.wait(0.1) do
-        if _G.AutoFarm then
-            pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                if not root then return end
-
-                for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        -- Voa para cima do bicho (proximidade)
-                        ToTween(v.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0))
-                        
-                        -- Coloca você na posição de ataque
-                        root.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                        break -- Foca em um por vez
-                    end
-                end
-            end)
-        end
-    end
-end)
-                
+        
 
 
             -- Procura em Enemies e NPCs (cobre todas as versões do jogo)
@@ -474,13 +430,6 @@ Tab1:CreateButton({
    Name = "Ir para o Cientista (Raid NPC)",
    Callback = function()
        TeleportToScientist()
-   end,
-})
-Tab1:CreateToggle({
-   Name = "Auto Farm (Proximidade)",
-   CurrentValue = false,
-   Callback = function(Value)
-       _G.AutoFarm = Value
    end,
 })
 
