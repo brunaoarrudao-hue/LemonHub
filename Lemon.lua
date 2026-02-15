@@ -95,7 +95,7 @@ task.spawn(function()
                         local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
                         if tool then char.Humanoid:EquipTool(tool) end
                     end
-                                else
+                else
                     -- 2. LÓGICA DE NAVEGAÇÃO POR #ISLAND
                     -- Se não há inimigos, procuramos a ilha na sequência
                     for i = 1, 5 do -- As raids costumam ter 5 ilhas
