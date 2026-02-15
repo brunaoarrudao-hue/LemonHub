@@ -12,8 +12,8 @@ end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-   Name = "🍋 Lemon Hub v4.9 | Ultimate Fix",
-   LoadingTitle = "A carregar funções críticas...",
+   Name = "🍋 Lemon Hub v4.9",
+   LoadingTitle = "Loading script",
 })
 
 _G.AutoFarm = false
