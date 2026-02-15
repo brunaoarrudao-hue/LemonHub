@@ -15,6 +15,9 @@ local Window = Rayfield:CreateWindow({
    Name = "🍋 Lemon Hub v4.9",
    LoadingTitle = "Loading script",
 })
+_G.BringMob = true
+_G.MegaHitbox = true
+_G.HitRange = 100
 _G.AutoQuest = false
 _G.MissaoSelecionada = "BanditQuest1"
 _G.NivelDaMissao = 1
@@ -103,7 +106,53 @@ local function TeleportToScientist()
         })
     end
 end
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            if _G.BringMob or _G.MegaHitbox then
+                local player = game.Players.LocalPlayer
+                local character = player.Character
+                local hrp = character.HumanoidRootPart
+                local tool = character:FindFirstChildOfClass("Tool")
+                
+                local enemies = workspace.Enemies:GetChildren()
+                local hitTargets = {}
 
+                for _, v in pairs(enemies) do
+                    local eHrp = v:FindFirstChild("HumanoidRootPart")
+                    local eHum = v:FindFirstChild("Humanoid")
+
+                    if eHrp and eHum and eHum.Health > 0 then
+                        local dist = (eHrp.Position - hrp.Position).Magnitude
+                        
+                        -- 1. Lógica do Bring Mob (Puxa para sua frente se estiver no range)
+                        if _G.BringMob and dist <= _G.HitRange then
+                            eHrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -3) -- Puxa para 3 studs na sua frente
+                            eHrp.CanCollide = false
+                            eHum:ChangeState(11)
+                        end
+
+                        -- 2. Lógica do Dano (Armazena quem será atingido)
+                        if _G.MegaHitbox and dist <= _G.HitRange then
+                            table.insert(hitTargets, eHrp)
+                        end
+                    end
+                end
+
+                -- 3. Dispara o Dano em Massa
+                if #hitTargets > 0 and tool then
+                    -- Envia o sinal de dano para todos os alvos da lista de uma vez
+                    game:GetService("ReplicatedStorage").RigControllerEvent:FireServer("hit", tool, hitTargets)
+                    
+                    -- Fast Attack (Corta animação para bater na velocidade da luz)
+                    for _, track in pairs(character.Humanoid:GetPlayingAnimationTracks()) do
+                        track:Stop(0)
+                    end
+                end
+            end
+        end)
+    end
+end)
                             
                             
 task.spawn(function()
