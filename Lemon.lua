@@ -15,6 +15,8 @@ local Window = Rayfield:CreateWindow({
    Name = "🍋 Lemon Hub v4.9",
    LoadingTitle = "Loading script",
 })
+_G.FastAttack = true
+_G.AttackSpeed = 0.05
 _G.BringMob = true
 _G.HitRange = 250 
 _G.DistanciaBaixo = 5
@@ -461,7 +463,47 @@ end)
         end
     end
 end)
+local player = game.Players.LocalPlayer
+local VirtualUser = game:GetService("VirtualUser")
+local Camera = workspace.CurrentCamera
 
+task.spawn(function()
+    while task.wait(_G.AttackSpeed) do
+        if _G.FastAttack then
+            pcall(function()
+                local character = player.Character
+                -- Verifica se você está segurando uma arma ou estilo de luta
+                local tool = character and character:FindFirstChildOfClass("Tool")
+                
+                if tool then
+                    -- 1. AUTO CLICK SUPER RÁPIDO (Simula o clique real do mouse)
+                    -- Clica exatamente no centro da sua tela para garantir que o hit registre
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton1(Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2), Camera.CFrame)
+                    
+                    -- Também força a ativação da ferramenta por segurança
+                    tool:Activate()
+
+                    -- 2. BATER SEM ANIMAÇÃO (No Animation)
+                    -- Procura qualquer animação tocando e para ela instantaneamente
+                    local humanoid = character:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        local animator = humanoid:FindFirstChildOfClass("Animator")
+                        if animator then
+                            for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+                                -- Se for uma animação de ataque, corta ela no frame zero
+                                if track.Animation.AnimationId ~= "" then
+                                    track:Stop(0)
+                                end
+                            end
+                        end
+                    end
+                    
+                end
+            end)
+        end
+    end
+end)
 -- Interface
 local Tab1 = Window:CreateTab("Principal", "bolt")
 Tab1:CreateToggle({
